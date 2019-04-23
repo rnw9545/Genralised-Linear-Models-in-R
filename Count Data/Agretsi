@@ -1,0 +1,81 @@
+#4/20/2019
+#hw4 bios 8020
+
+require(foreign)
+require(MASS)
+require(pscl)
+
+#7.30
+
+sharks <- read.csv(file.choose(), header=T)
+#are counts consistent with a null poisson model or 
+# a null negative binomial alternative
+
+summary(glm(y ~ 1, family=poisson, data=sharks)) #default link is log
+logLik(glm(y ~ 1, family=poisson, data=sharks))
+
+# a null negative binomial alternative
+
+library(MASS)
+summary(glm.nb(y ~ 1, data=sharks)) #default link is log
+logLik(glm.nb(y ~ 1, data=sharks))
+
+#7.31
+
+homicide <- read.csv(file.choose(), header=T)
+head(homicide)
+#fit poisson GLM
+summary(glm(y ~ raceb1 + racew0, family=poisson, data=homicide))
+
+homicide1 <- read.csv(file.choose(), header=T)
+head(homicide1)
+
+#fit poisson GLM
+summary(glm(y ~ factor(race) + people, family=poisson, data=homicide1))
+
+#fit a hurdle regression
+
+homicide1$race<-factor(x=homicide1$race,levels=0:1,labels=c("white","black"))
+
+summary(hurdle(y~race+people|race,data=homicide1,zero.dist="binomial",
+           link="logit",dist="poisson"))
+
+#negative binomial
+summary(hurdle(y~race+people|race,data=homicide1,zero.dist="binomial",
+               link="logit",dist="negbin"))
+
+
+
+#7.34
+
+#remove row with 5.2kg weight
+
+crab1 <- crab[-c(141),]
+#zero-inflated without the outlier
+
+library(pscl)
+
+fit2 <- (zeroinfl(y ~ weight | weight + color, data=crab1, dist="negbin"))
+summary(fit2)
+
+fit1 <- (zeroinfl(y ~ weight | weight + color, data=crab, dist="negbin"))
+summary(fit1)
+
+#compare models
+pchisq(2*(logLik(fit2) - logLik(fit1)), df = 1, lower.tail = FALSE)
+
+
+#7.36
+doctors <- read.csv(file.choose(), header=T)
+head(doctors)
+logpyears <- log (doctors$pyears)
+
+fit <- glm(deaths ~ factor(smoke) + factor(age) + factor(smoke) * factor(age),data=doctors, family = poisson(link = log), offset = logpyears)
+summary(fit)
+
+#7.28
+summary(crab)
+y_generate=rpois(173, 2.919) #where 2.919 is the mean of y
+plot(crab$width, y_generate)
+fit4 <- glm(y_generate ~ width,data=crab, family = poisson(link = log))
+summary(fit4)
